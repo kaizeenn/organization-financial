@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %> - Organization Financial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/stylesheets/tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <%- include('../../partials/sidebar', { user: user, active: 'activities' }) %>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64">
+      <!-- Top Navigation -->
+      <nav class="bg-white border-b border-gray-200 px-4 py-3 md:px-6">
+        <div class="flex items-center justify-between">
+          <button id="sidebarToggle" class="md:hidden text-gray-600">
+            <i class="bi bi-list text-2xl"></i>
+          </button>
+          <h1 class="text-xl font-semibold text-gray-800"><%= title %></h1>
+          <div class="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-white font-medium">
+            <%= user.nama.charAt(0).toUpperCase() %>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <div class="p-4 md:p-6">
+        <a href="/activities" class="text-brand-500 hover:text-brand-600 flex items-center gap-2 mb-4">
+          <i class="bi bi-arrow-left"></i> Kembali
+        </a>
+
+        <!-- Activity Header -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <div class="flex items-start justify-between mb-4">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900"><%= activity.nama_kegiatan %></h2>
+              <% if (activity.divisi) { %>
+                <p class="text-gray-600 mt-1"><%= activity.divisi %></p>
+              <% } %>
+            </div>
+            <% if (user.role === 'super_admin' || user.role === 'bendahara') { %>
+              <select id="statusSelect" class="input w-40" onchange="updateStatus()">
+                <option value="perencanaan" <%= activity.status === 'perencanaan' ? 'selected' : '' %>>Perencanaan</option>
+                <option value="berjalan" <%= activity.status === 'berjalan' ? 'selected' : '' %>>Berjalan</option>
+                <option value="selesai" <%= activity.status === 'selesai' ? 'selected' : '' %>>Selesai</option>
+              </select>
+            <% } else { %>
+              <span class="badge capitalize <%= activity.status === 'berjalan' ? 'badge-warning' : activity.status === 'selesai' ? 'badge-success' : 'badge-primary' %>">
+                <%= activity.status %>
+              </span>
+            <% } %>
+          </div>
+
+          <!-- Budget Stats -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <p class="text-sm text-gray-600">Anggaran</p>
+              <p class="text-2xl font-bold text-gray-900"><%= formatRupiah(activity.anggaran) %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Realisasi</p>
+              <p class="text-2xl font-bold text-gray-900"><%= formatRupiah(activity.realisasi) %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Sisa</p>
+              <p class="text-2xl font-bold <%= activity.sisa_anggaran < 0 ? 'text-danger-600' : 'text-success-600' %>">
+                <%= formatRupiah(activity.sisa_anggaran) %>
+              </p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Progress</p>
+              <p class="text-2xl font-bold text-gray-900"><%= Math.round((activity.realisasi / activity.anggaran) * 100) %>%</p>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="mt-6">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-gray-600">Progress Pengeluaran</span>
+              <span class="font-semibold"><%= Math.round((activity.realisasi / activity.anggaran) * 100) %>%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div 
+                class="<%= Math.round((activity.realisasi / activity.anggaran) * 100) > 100 ? 'bg-danger-500' : 'bg-success-500' %> h-3 rounded-full transition" 
+                style="width: <%= Math.min((activity.realisasi / activity.anggaran) * 100, 100) %>%"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expenses Section -->
+        <div class="bg-white rounded-lg shadow">
+          <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="text-lg font-semibold">Pengeluaran Kegiatan</h3>
+            <% if (user.role === 'super_admin' || user.role === 'bendahara' || user.role === 'pengurus') { %>
+              <a href="/expenses" class="btn-primary text-sm">+ Tambah Pengeluaran</a>
+            <% } %>
+          </div>
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% if (expenses.length === 0) { %>
+                <tr>
+                  <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    Belum ada pengeluaran untuk kegiatan ini
+                  </td>
+                </tr>
+              <% } else { %>
+                <% expenses.forEach(expense => { %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                      <%= formatDate(expense.created_at) %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                      <%= expense.nama_kategori || '-' %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                      <%= expense.keterangan || '-' %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900">
+                      <%= formatRupiah(expense.jumlah) %>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <% if (expense.status === 'disetujui') { %>
+                        <span class="badge badge-success">Disetujui</span>
+                      <% } else if (expense.status === 'pending') { %>
+                        <span class="badge badge-warning">Pending</span>
+                      <% } else { %>
+                        <span class="badge badge-danger">Ditolak</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+      });
+    }
+
+    function updateStatus() {
+      const select = document.getElementById('statusSelect');
+      const status = select.value;
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/activities/<%= activity.id %>/status`;
+      form.innerHTML = `<input type="hidden" name="status" value="${status}">`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  </script>
+</body>
+</html>

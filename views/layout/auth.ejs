@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Organization Financial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/stylesheets/tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-brand-500 to-brand-400 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <%- body %>
+  </div>
+  
+  <%- typeof script !== 'undefined' ? script : '' %>
+</body>
+</html>

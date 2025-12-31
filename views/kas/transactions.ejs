@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %> - Organization Financial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/stylesheets/tailwind.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <%- include('../../partials/sidebar', { user: user, active: 'kas' }) %>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64">
+      <!-- Top Navigation -->
+      <nav class="bg-white border-b border-gray-200 px-4 py-3 md:px-6">
+        <div class="flex items-center justify-between">
+          <button id="sidebarToggle" class="md:hidden text-gray-600">
+            <i class="bi bi-list text-2xl"></i>
+          </button>
+          <h1 class="text-xl font-semibold text-gray-800"><%= title %></h1>
+          <div class="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-white font-medium">
+            <%= user.nama.charAt(0).toUpperCase() %>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <div class="p-4 md:p-6">
+        <div class="mb-6">
+          <a href="/kas" class="text-brand-500 hover:text-brand-600 flex items-center gap-2 mb-4">
+            <i class="bi bi-arrow-left"></i> Kembali
+          </a>
+          <h2 class="text-2xl font-bold text-gray-900">Riwayat Transaksi</h2>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Akun Kas</p>
+            <h3 class="text-2xl font-bold text-gray-900 mt-2"><%= kasAccount.nama_akun %></h3>
+            <p class="text-xs text-gray-500 mt-1 capitalize"><%= kasAccount.tipe %></p>
+          </div>
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Saldo Saat Ini</p>
+            <h3 class="text-2xl font-bold text-success-600 mt-2"><%= formatRupiah(kasAccount.saldo) %></h3>
+          </div>
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Total Transaksi</p>
+            <h3 class="text-2xl font-bold text-gray-900 mt-2"><%= transactions.length %></h3>
+          </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sumber</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Saldo</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% if (transactions.length === 0) { %>
+                <tr>
+                  <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                    Belum ada transaksi
+                  </td>
+                </tr>
+              <% } else { %>
+                <% transactions.forEach(trx => { %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                      <%= formatDate(trx.created_at) %>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="badge <%= trx.tipe === 'masuk' ? 'badge-success' : 'badge-danger' %>">
+                        <%= trx.tipe %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600 capitalize">
+                      <%= trx.sumber %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-medium <%= trx.tipe === 'masuk' ? 'text-success-600' : 'text-danger-600' %>">
+                      <%= trx.tipe === 'masuk' ? '+' : '-' %><%= formatRupiah(trx.jumlah) %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900">
+                      <%= formatRupiah(trx.saldo_setelah) %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+      });
+    }
+  </script>
+</body>
+</html>

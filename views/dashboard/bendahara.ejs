@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %> - Organization Financial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/stylesheets/tailwind.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .sidebar {
+      transition: transform 0.3s ease;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 320px;
+      width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      .chart-container {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <%- include('../partials/sidebar', { user: user, active: 'dashboard' }) %>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64">
+      <!-- Top Navigation -->
+      <nav class="bg-white border-b border-gray-200 px-4 py-3 md:px-6">
+        <div class="flex items-center justify-between">
+          <button id="sidebarToggle" class="md:hidden text-gray-600">
+            <i class="bi bi-list text-2xl"></i>
+          </button>
+          <h1 class="text-xl font-semibold text-gray-800"><%= title %></h1>
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-600 hidden sm:inline"><%= user.nama %></span>
+            <div class="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-white font-medium">
+              <%= user.nama.charAt(0).toUpperCase() %>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <div class="p-4 md:p-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <!-- Total Kas -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">Total Kas Organisasi</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                  <%= formatRupiah(stats.totalKas) %>
+                </h3>
+              </div>
+              <div class="w-12 h-12 bg-success-100 rounded-lg flex items-center justify-center">
+                <i class="bi bi-wallet2 text-2xl text-success-600"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Iuran -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">Iuran Pending</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                  <%= stats.pendingIuranCount %>
+                </h3>
+                <p class="text-xs text-gray-500 mt-1"><%= formatRupiah(stats.pendingIuranTotal) %></p>
+              </div>
+              <div class="w-12 h-12 bg-warning-100 rounded-lg flex items-center justify-center">
+                <i class="bi bi-credit-card text-2xl text-warning-600"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expenses This Month -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">Pengeluaran Bulan Ini</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                  <%= formatRupiah(stats.expensesThisMonth) %>
+                </h3>
+              </div>
+              <div class="w-12 h-12 bg-danger-100 rounded-lg flex items-center justify-center">
+                <i class="bi bi-cash-stack text-2xl text-danger-600"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Activities -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-gray-600">Kegiatan Aktif</p>
+                <h3 class="text-2xl font-bold text-gray-900 mt-2">
+                  <%= kasAccounts.length %>
+                </h3>
+              </div>
+              <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
+                <i class="bi bi-calendar-event text-2xl text-primary-600"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart & Kas Accounts -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <!-- Chart -->
+          <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Kas Masuk vs Keluar (6 Bulan Terakhir)</h3>
+            <div class="chart-container">
+              <canvas id="cashFlowChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Kas Accounts -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Akun Kas</h3>
+            <div class="space-y-3">
+              <% kasAccounts.forEach(kas => { %>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900"><%= kas.nama_akun %></p>
+                    <p class="text-xs text-gray-500 capitalize"><%= kas.tipe %></p>
+                  </div>
+                  <p class="text-sm font-semibold text-gray-900">
+                    <%= formatRupiah(kas.saldo) %>
+                  </p>
+                </div>
+              <% }) %>
+            </div>
+            <a href="/kas" class="block mt-4 text-center text-sm text-brand-500 hover:text-brand-600 font-medium">
+              Lihat Semua <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="bg-white rounded-lg shadow">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Transaksi Terbaru</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Akun Kas</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sumber</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Saldo</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% recentTransactions.forEach(trx => { %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                      <%= formatDate(trx.created_at) %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                      <%= trx.nama_akun %>
+                    </td>
+                    <td class="px-6 py-4">
+                      <span class="badge <%= trx.tipe === 'masuk' ? 'badge-success' : 'badge-danger' %>">
+                        <%= trx.tipe %>
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600 capitalize">
+                      <%= trx.sumber %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-medium <%= trx.tipe === 'masuk' ? 'text-success-600' : 'text-danger-600' %>">
+                      <%= trx.tipe === 'masuk' ? '+' : '-' %><%= formatRupiah(trx.jumlah) %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right text-gray-900">
+                      <%= formatRupiah(trx.saldo_setelah) %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar toggle for mobile
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+      });
+      
+      document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+          sidebar.classList.remove('active');
+        }
+      });
+    }
+
+    // Chart
+    const ctx = document.getElementById('cashFlowChart');
+    const chartData = <%- JSON.stringify(chartData) %>;
+    
+    const labels = chartData.map(d => {
+      const [year, month] = d.bulan.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+    });
+    
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Kas Masuk',
+            data: chartData.map(d => d.masuk),
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.4
+          },
+          {
+            label: 'Kas Keluar',
+            data: chartData.map(d => d.keluar),
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return 'Rp ' + value.toLocaleString('id-ID');
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

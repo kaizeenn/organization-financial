@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Laporan Keuangan - Organization Financial</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="/stylesheets/tailwind.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <%- include('../partials/sidebar', { user: user, active: 'reports' }) %>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-64">
+      <!-- Top Navigation -->
+      <nav class="bg-white border-b border-gray-200 px-4 py-3 md:px-6">
+        <div class="flex items-center justify-between">
+          <button id="sidebarToggle" class="md:hidden text-gray-600">
+            <i class="bi bi-list text-2xl"></i>
+          </button>
+          <h1 class="text-xl font-semibold text-gray-800">Laporan Keuangan</h1>
+          <div class="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-white font-medium">
+            <%= user.nama.charAt(0).toUpperCase() %>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page Content -->
+      <div class="p-4 md:p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-900">Laporan Keuangan Organisasi</h2>
+          <p class="text-gray-600 mt-1">Analisis keuangan dan pengeluaran keseluruhan</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Total Kas Masuk</p>
+            <h3 class="text-2xl font-bold text-success-600 mt-2"><%= formatRupiah(summary.totalMasuk) %></h3>
+            <p class="text-xs text-gray-500 mt-1">Dari iuran dan donasi</p>
+          </div>
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Total Pengeluaran</p>
+            <h3 class="text-2xl font-bold text-danger-600 mt-2"><%= formatRupiah(summary.totalKeluar) %></h3>
+            <p class="text-xs text-gray-500 mt-1"><%= summary.jumlahPengeluaran %> transaksi</p>
+          </div>
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Saldo Kas</p>
+            <h3 class="text-2xl font-bold text-brand-600 mt-2"><%= formatRupiah(summary.saldoKas) %></h3>
+            <p class="text-xs text-gray-500 mt-1">Total semua kas</p>
+          </div>
+          <div class="bg-white rounded-lg shadow p-6">
+            <p class="text-sm text-gray-600">Netral</p>
+            <h3 class="text-2xl font-bold <%= summary.saldoKas >= 0 ? 'text-success-600' : 'text-danger-600' %> mt-2">
+              <%= formatRupiah(summary.saldoKas) %>
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">Selisih masuk/keluar</p>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <!-- Cash Flow Chart -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Arus Kas 6 Bulan</h3>
+            <canvas id="cashFlowChart"></canvas>
+          </div>
+
+          <!-- Expense By Category -->
+          <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Pengeluaran per Kategori</h3>
+            <canvas id="expenseCategoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top Expenses -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Biggest Expenses -->
+          <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+              <h3 class="text-lg font-semibold">Pengeluaran Terbesar</h3>
+            </div>
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kegiatan</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% topExpenses.forEach(exp => { %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                      <%= exp.nama_kegiatan %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-semibold text-gray-900">
+                      <%= formatRupiah(exp.total) %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Recent Transactions -->
+          <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-6 border-b border-gray-200">
+              <h3 class="text-lg font-semibold">Transaksi Terbaru</h3>
+            </div>
+            <table class="w-full">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sumber</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% recentTransactions.forEach(trx => { %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                      <%= formatDate(trx.created_at) %>
+                    </td>
+                    <td class="px-6 py-4 text-sm capitalize text-gray-600">
+                      <%= trx.sumber %>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-semibold <%= trx.tipe === 'masuk' ? 'text-success-600' : 'text-danger-600' %>">
+                      <%= trx.tipe === 'masuk' ? '+' : '-' %><%= formatRupiah(trx.jumlah) %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
+      });
+    }
+
+    // Cash Flow Chart
+    const ctx1 = document.getElementById('cashFlowChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: <%= JSON.stringify(chartData.labels) %>,
+        datasets: [
+          {
+            label: 'Kas Masuk',
+            data: <%= JSON.stringify(chartData.masuk) %>,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Kas Keluar',
+            data: <%= JSON.stringify(chartData.keluar) %>,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.3,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // Expense Category Chart
+    const ctx2 = document.getElementById('expenseCategoryChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: <%= JSON.stringify(chartData.categories) %>,
+        datasets: [{
+          data: <%= JSON.stringify(chartData.categoryValues) %>,
+          backgroundColor: [
+            '#465fff',
+            '#10b981',
+            '#f59e0b',
+            '#ef4444',
+            '#8b5cf6',
+            '#ec4899'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'right'
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
